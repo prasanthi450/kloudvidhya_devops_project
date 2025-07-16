@@ -1,0 +1,40 @@
+---
+- name: Install Jenkins on Instance B
+  hosts: jenkins_server
+  become: yes
+
+  tasks:
+    - name: Enable amazon-linux-extras java-openjdk17
+      shell: amazon-linux-extras enable java-openjdk17
+      args:
+        creates: /etc/yum.repos.d/amzn2-extras.repo
+
+    - name: Clean yum metadata
+      command: yum clean metadata
+
+    - name: Install Java 17 (Amazon Corretto)
+      yum:
+        name: java-17-amazon-corretto-devel
+        state: present
+
+    - name: Add Jenkins repo file
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+
+    - name: Import Jenkins GPG key
+      rpm_key:
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+        state: present
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: present
+
+    - name: Start and enable Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
